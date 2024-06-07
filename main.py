@@ -7,7 +7,7 @@ from ta.utils import dropna
 from io import BytesIO
 from streamlit_option_menu import option_menu
 
-# الترجمة اليدوية
+# Translation dictionary
 translations = {
     "en": {
         "crypto_data_with_technical_indicators": "Crypto Data with Technical Indicators",
@@ -56,12 +56,12 @@ def fetch_data(symbol, interval, api_key):
         '1d': 'histoday'
     }
     limit_map = {
-        '1m': 60,
-        '5m': 60,
-        '15m': 60,
-        '30m': 60,
+        '1m': 1440,
+        '5m': 288,
+        '15m': 96,
+        '30m': 48,
         '1h': 24,
-        '4h': 24,
+        '4h': 60,
         '1d': 30
     }
     interval_value = interval_map.get(interval, 'histohour')
