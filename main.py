@@ -180,28 +180,29 @@ def main():
                 st.error(t('insufficient_data', lang))
                 continue
             df = df.sort_index(ascending=False)
-            current_price = df['close'].iloc[0]
+            current_price = df['close'].iloc[0] if not df.empty else 0
             df['current_price'] = current_price  # إضافة سعر العملة الحالي كعمود
             all_data.append((interval, df))
 
-        for interval, df in all_data:
-            if not df.empty:
-                st.subheader(f"{t('current_price', lang)} ({interval}): {current_price:.2f} USD")
+        if all_data:
+            for interval, df in all_data:
+                if not df.empty:
+                    st.subheader(f"{t('current_price', lang)} ({interval}): {current_price:.2f} USD")
 
-                fig = plot_interactive_chart(df, lang)
-                st.plotly_chart(fig)
+                    fig = plot_interactive_chart(df, lang)
+                    st.plotly_chart(fig)
 
-                st.subheader(f"{t('technical_indicators_data', lang)} ({interval})")
-                st.dataframe(df)
+                    st.subheader(f"{t('technical_indicators_data', lang)} ({interval})")
+                    st.dataframe(df)
 
-        with BytesIO() as buffer:
-            with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
-                for interval, df in all_data:
-                    df_reset = df.reset_index()
-                    # إزالة معلومات المنطقة الزمنية
-                    df_reset['timestamp'] = df_reset['timestamp'].dt.tz_localize(None)
-                    df_reset.to_excel(writer, index=False, sheet_name=interval)
-            st.download_button(label=t("download_data_as_excel", lang), data=buffer, file_name=f'{symbol}.xlsx', mime='application/vnd.ms-excel')
+            with BytesIO() as buffer:
+                with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
+                    for interval, df in all_data:
+                        df_reset = df.reset_index()
+                        # إزالة معلومات المنطقة الزمنية
+                        df_reset['timestamp'] = df_reset['timestamp'].dt.tz_localize(None)
+                        df_reset.to_excel(writer, index=False, sheet_name=interval)
+                st.download_button(label=t("download_data_as_excel", lang), data=buffer, file_name=f'{symbol}.xlsx', mime='application/vnd.ms-excel')
 
     st.markdown(f"<div style='text-align: center;'>{t('all_rights_reserved', lang)} أحمد الحارثي</div>", unsafe_allow_html=True)
 
