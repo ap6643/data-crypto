@@ -40,22 +40,18 @@ translations = {
     }
 }
 
-
 def t(key, lang):
     return translations[lang].get(key, key)
-
 
 def fetch_data(symbol, interval):
     url = f'https://api.binance.com/api/v3/klines?symbol={symbol}&interval={interval}&limit=1000'
     response = requests.get(url)
     data = response.json()
-    df = pd.DataFrame(data, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume', 'close_time', 'quote_av',
-                                     'trades', 'tb_base_av', 'tb_quote_av', 'ignore'])
+    df = pd.DataFrame(data, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume', 'close_time', 'quote_av', 'trades', 'tb_base_av', 'tb_quote_av', 'ignore'])
     df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
     df.set_index('timestamp', inplace=True)
     df = df[['open', 'high', 'low', 'close', 'volume']].astype(float)
     return df
-
 
 def add_technical_indicators(df):
     if df.empty or len(df) < 50:  # Ensure at least 50 rows are present
@@ -64,7 +60,6 @@ def add_technical_indicators(df):
     df = add_all_ta_features(
         df, open="open", high="high", low="low", close="close", volume="volume")
     return df, True
-
 
 def plot_interactive_chart(df, lang):
     fig = go.Figure(data=[go.Candlestick(x=df.index,
@@ -80,10 +75,8 @@ def plot_interactive_chart(df, lang):
     )
     return fig
 
-
 # Set page configuration
 st.set_page_config(page_title="Crypto Data with Technical Indicators")
-
 
 def main():
     # Language selector
@@ -91,13 +84,16 @@ def main():
 
     st.title(t('crypto_data_with_technical_indicators', lang))
 
-    # Autocomplete for crypto symbol
-    symbol_list = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'ADAUSDT', 'SOLUSDT', 'XRPUSDT']
-    symbol = st.selectbox(t('crypto_symbol', lang), options=symbol_list)
+    # Input for crypto symbol
+    symbol = st.text_input(t('crypto_symbol', lang), '')
 
     intervals = st.multiselect(t('time_intervals', lang), ['1m', '5m', '15m', '30m', '1h', '4h', '1d'], default=['15m'])
 
     if st.button(t('fetch_data', lang)):
+        if not symbol:
+            st.error("Please enter a valid crypto symbol.")
+            return
+        
         all_data = []
         for interval in intervals:
             df = fetch_data(symbol, interval)
@@ -119,18 +115,15 @@ def main():
 
                 st.subheader(f"{t('technical_indicators_data', lang)} ({interval})")
                 st.dataframe(df)
-
+        
         with BytesIO() as buffer:
             with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
                 for interval, df in all_data:
                     df_reset = df.reset_index()
                     df_reset.to_excel(writer, index=False, sheet_name=interval)
-            st.download_button(label=t("download_data_as_excel", lang), data=buffer, file_name=f'{symbol}.xlsx',
-                               mime='application/vnd.ms-excel')
-
-    st.markdown(f"<div style='text-align: center;'>{t('all_rights_reserved', lang)} أحمد الحارثي</div>",
-                unsafe_allow_html=True)
-
+            st.download_button(label=t("download_data_as_excel", lang), data=buffer, file_name=f'{symbol}.xlsx', mime='application/vnd.ms-excel')
+    
+    st.markdown(f"<div style='text-align: center;'>{t('all_rights_reserved', lang)} أحمد الحارثي</div>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
