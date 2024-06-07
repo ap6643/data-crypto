@@ -184,7 +184,7 @@ def main():
 
                     st.subheader(f"{t('technical_indicators_data', lang)} ({interval})")
                     st.dataframe(df)
-# ليب
+
             with BytesIO() as buffer:
                 with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
                     for interval, df in all_data:
