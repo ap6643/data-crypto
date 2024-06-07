@@ -198,10 +198,11 @@ def main():
             with BytesIO() as buffer:
                 with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
                     for interval, df in all_data:
-                        df_reset = df.reset_index()
-                        # إزالة معلومات المنطقة الزمنية
-                        df_reset['timestamp'] = df_reset['timestamp'].dt.tz_localize(None)
-                        df_reset.to_excel(writer, index=False, sheet_name=interval)
+                        if not df.empty:
+                            df_reset = df.reset_index()
+                            # إزالة معلومات المنطقة الزمنية
+                            df_reset['timestamp'] = df_reset['timestamp'].dt.tz_localize(None)
+                            df_reset.to_excel(writer, index=False, sheet_name=interval)
                 st.download_button(label=t("download_data_as_excel", lang), data=buffer, file_name=f'{symbol}.xlsx', mime='application/vnd.ms-excel')
 
     st.markdown(f"<div style='text-align: center;'>{t('all_rights_reserved', lang)} أحمد الحارثي</div>", unsafe_allow_html=True)
