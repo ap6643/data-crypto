@@ -97,7 +97,7 @@ def main():
                       'LINKUSDT', 'DOGEUSDT']
 
     # Input for crypto symbol with autocomplete
-    symbol = st.text_input(t('crypto_symbol', lang), placeholder='e.g., BTCUSDT')
+    symbol = st.text_input(t('crypto_symbol', lang), placeholder='e.g...., BTCUSDT')
 
     if symbol:
         suggestions = [s for s in crypto_symbols if s.startswith(symbol.upper())]
