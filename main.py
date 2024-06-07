@@ -6,16 +6,6 @@ from ta import add_all_ta_features
 from ta.utils import dropna
 from io import BytesIO
 from streamlit_option_menu import option_menu
-import os
-
-# تحميل ملف CSS
-def local_css(file_name):
-    if os.path.exists(file_name):
-        with open(file_name) as f:
-            st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
-
-# تحميل ملف CSS
-local_css("style.css")
 
 # الترجمة اليدوية
 translations = {
@@ -67,12 +57,12 @@ def fetch_data(symbol, interval, api_key):
     }
     limit_map = {
         '1m': 60,
-        '5m': 12,
-        '15m': 12,
-        '30m': 12,
-        '1h': 12,
-        '4h': 12,
-        '1d': 12
+        '5m': 60,
+        '15m': 60,
+        '30m': 60,
+        '1h': 24,
+        '4h': 24,
+        '1d': 30
     }
     interval_value = interval_map.get(interval, 'histohour')
     limit_value = limit_map.get(interval, 60)
@@ -157,7 +147,7 @@ def main():
             symbol = selected_symbol
 
     intervals = st.multiselect(t('time_intervals', lang), ['1m', '5m', '15m', '30m', '1h', '4h', '1d'], default=['15m'])
-    api_key = "7ce46e7d36e1a7a4294702f9ec21dda614a71beaed7e0fe954c5993620765217"  # مفتاح API الخاص بك
+    api_key = st.text_input("Enter your CryptoCompare API key", type="password")  # Replace with your actual API key
 
     if st.button(t('fetch_data', lang)):
         if not symbol:
@@ -181,7 +171,7 @@ def main():
                 continue
             df = df.sort_index(ascending=False)
             current_price = df['close'].iloc[0] if not df.empty else 0
-            df['current_price'] = current_price  # إضافة سعر العملة الحالي كعمود
+            df['current_price'] = current_price  # Adding current price as a column
             all_data.append((interval, df))
 
         if all_data:
@@ -200,7 +190,7 @@ def main():
                     for interval, df in all_data:
                         if not df.empty:
                             df_reset = df.reset_index()
-                            # إزالة معلومات المنطقة الزمنية
+                            # Remove timezone information
                             df_reset['timestamp'] = df_reset['timestamp'].dt.tz_localize(None)
                             df_reset.to_excel(writer, index=False, sheet_name=interval)
                 st.download_button(label=t("download_data_as_excel", lang), data=buffer, file_name=f'{symbol}.xlsx', mime='application/vnd.ms-excel')
