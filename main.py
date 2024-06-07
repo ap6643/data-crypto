@@ -41,31 +41,33 @@ translations = {
     }
 }
 
-
 def t(key, lang):
     return translations[lang].get(key, key)
-
 
 def fetch_data(symbol, interval):
     url = f'https://api.binance.com/api/v3/klines?symbol={symbol}&interval={interval}&limit=1000'
     response = requests.get(url)
+    if response.status_code != 200:
+        st.error(f"Error fetching data: {response.status_code}")
+        return pd.DataFrame()
     data = response.json()
-    df = pd.DataFrame(data, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume', 'close_time', 'quote_av',
-                                     'trades', 'tb_base_av', 'tb_quote_av', 'ignore'])
+    df = pd.DataFrame(data, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume', 'close_time', 'quote_av', 'trades', 'tb_base_av', 'tb_quote_av', 'ignore'])
     df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
     df.set_index('timestamp', inplace=True)
     df = df[['open', 'high', 'low', 'close', 'volume']].astype(float)
     return df
 
-
 def add_technical_indicators(df):
     if df.empty or len(df) < 50:  # Ensure at least 50 rows are present
         return df, False
-    df = dropna(df)
-    df = add_all_ta_features(
-        df, open="open", high="high", low="low", close="close", volume="volume")
-    return df, True
-
+    try:
+        df = dropna(df)
+        df = add_all_ta_features(
+            df, open="open", high="high", low="low", close="close", volume="volume")
+        return df, True
+    except Exception as e:
+        st.error(f"Error adding technical indicators: {e}")
+        return df, False
 
 def plot_interactive_chart(df, lang):
     fig = go.Figure(data=[go.Candlestick(x=df.index,
@@ -81,10 +83,8 @@ def plot_interactive_chart(df, lang):
     )
     return fig
 
-
 # Set page configuration
 st.set_page_config(page_title="Crypto Data with Technical Indicators")
-
 
 def main():
     # Language selector
@@ -93,11 +93,10 @@ def main():
     st.title(t('crypto_data_with_technical_indicators', lang))
 
     # List of common crypto symbols for autocomplete
-    crypto_symbols = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'ADAUSDT', 'SOLUSDT', 'XRPUSDT', 'DOTUSDT', 'LTCUSDT',
-                      'LINKUSDT', 'DOGEUSDT']
+    crypto_symbols = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'ADAUSDT', 'SOLUSDT', 'XRPUSDT', 'DOTUSDT', 'LTCUSDT', 'LINKUSDT', 'DOGEUSDT']
 
     # Input for crypto symbol with autocomplete
-    symbol = st.text_input(t('crypto_symbol', lang), placeholder='e.g...., BTCUSDT')
+    symbol = st.text_input(t('crypto_symbol', lang), placeholder='e.g., BTCUSDT')
 
     if symbol:
         suggestions = [s for s in crypto_symbols if s.startswith(symbol.upper())]
@@ -118,10 +117,14 @@ def main():
         if not symbol:
             st.error("Please enter a valid crypto symbol.")
             return
-
+        
         all_data = []
         for interval in intervals:
             df = fetch_data(symbol, interval)
+            if df.empty:
+                st.error(f"Failed to fetch data for {symbol} with interval {interval}")
+                return
+
             df, valid = add_technical_indicators(df)
             if not valid:
                 st.error(t('insufficient_data', lang))
@@ -140,18 +143,15 @@ def main():
 
                 st.subheader(f"{t('technical_indicators_data', lang)} ({interval})")
                 st.dataframe(df)
-
+        
         with BytesIO() as buffer:
             with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
                 for interval, df in all_data:
                     df_reset = df.reset_index()
                     df_reset.to_excel(writer, index=False, sheet_name=interval)
-            st.download_button(label=t("download_data_as_excel", lang), data=buffer, file_name=f'{symbol}.xlsx',
-                               mime='application/vnd.ms-excel')
-
-    st.markdown(f"<div style='text-align: center;'>{t('all_rights_reserved', lang)} أحمد الحارثي</div>",
-                unsafe_allow_html=True)
-
+            st.download_button(label=t("download_data_as_excel", lang), data=buffer, file_name=f'{symbol}.xlsx', mime='application/vnd.ms-excel')
+    
+    st.markdown(f"<div style='text-align: center;'>{t('all_rights_reserved', lang)} أحمد الحارثي</div>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
