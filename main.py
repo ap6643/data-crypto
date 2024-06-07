@@ -6,12 +6,13 @@ from ta import add_all_ta_features
 from ta.utils import dropna
 from io import BytesIO
 from streamlit_option_menu import option_menu
-import pytz
+import os
 
 # تحميل ملف CSS
 def local_css(file_name):
-    with open(file_name) as f:
-        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+    if os.path.exists(file_name):
+        with open(file_name) as f:
+            st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
 # تحميل ملف CSS
 local_css("style.css")
@@ -95,9 +96,6 @@ def fetch_data(symbol, interval, api_key):
         df = df[['open', 'high', 'low', 'close', 'volumefrom']]
         df.columns = ['open', 'high', 'low', 'close', 'volume']
         df = df.astype(float)
-
-        # تحويل التوقيت إلى التوقيت المحلي ثم إزالة معلومات المنطقة الزمنية
-        df.index = df.index.tz_localize(pytz.utc).tz_convert(pytz.timezone('Asia/Riyadh')).tz_localize(None)  # استبدل 'Asia/Riyadh' بالمنطقة الزمنية لمدينتك
 
         return df
     except Exception as e:
