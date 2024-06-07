@@ -4,3 +4,4 @@ requests
 plotly
 ta
 openpyxl
+streamlit-option-menu
