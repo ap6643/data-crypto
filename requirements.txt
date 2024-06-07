@@ -1,9 +1,6 @@
-pandas
-numpy
-ta
-scikit-learn
-tensorflow
-matplotlib
-seaborn
-yfinance
 streamlit
+pandas
+requests
+plotly
+ta
+openpyxl
