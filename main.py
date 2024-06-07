@@ -171,8 +171,8 @@ def main():
         all_data = []
         for interval in intervals:
             df = fetch_data(symbol, interval, api_key)
-            if df.empty:
-                st.error(f"Failed to fetch data for {symbol} with interval {interval}")
+            if df.empty or len(df) < 50:  # Check if data is sufficient before adding indicators
+                st.error(f"Not enough data for {symbol} with interval {interval}. Please try again with a different symbol or interval.")
                 continue
 
             df, valid = add_technical_indicators(df)
